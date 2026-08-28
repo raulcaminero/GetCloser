@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id                     String     @id @default(cuid())
+  name                   String
+  businessName           String
+  sector                 String
+  tone                   String
+  qualificationQuestions String[]
+  maxMessages            Int        @default(20)
+  handoffMessage         String
+  isActive               Boolean    @default(true)
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+
+  products  Product[]
+  campaigns Campaign[]
+  leads     Lead[]
+}
+
+model Product {
+  id       String  @id @default(cuid())
+  name     String
+  price    String
+  features String
+  zone     String?
+  imageUrl String?
+  agentId  String
+
+  agent Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  leads Lead[] @relation("InterestedProduct")
+}
+
+model Campaign {
+  id              String         @id @default(cuid())
+  name            String
+  templateMessage String
+  status          CampaignStatus @default(DRAFT)
+  totalContacts   Int            @default(0)
+  sentCount       Int            @default(0)
+  agentId         String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  agent Agent  @relation(fields: [agentId], references: [id])
+  leads Lead[]
+}
+
+model Lead {
+  id                  String          @id @default(cuid())
+  phone               String
+  name                String?
+  temperature         LeadTemperature @default(COLD)
+  messageCount        Int             @default(0)
+  summary             String          @default("")
+  handedOff           Boolean         @default(false)
+  handedOffAt         DateTime?
+  agentId             String
+  campaignId          String?
+  interestedProductId String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  agent             Agent                 @relation(fields: [agentId], references: [id])
+  campaign          Campaign?             @relation(fields: [campaignId], references: [id])
+  interestedProduct Product?              @relation("InterestedProduct", fields: [interestedProductId], references: [id])
+  messages          ConversationMessage[]
+
+  @@unique([phone, agentId])
+}
+
+model ConversationMessage {
+  id      String      @id @default(cuid())
+  leadId  String
+  role    MessageRole
+  content String
+  sentAt  DateTime    @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum LeadTemperature {
+  HOT
+  WARM
+  COLD
+}
+
+enum MessageRole {
+  AGENT
+  CUSTOMER
+}
