@@ -43,7 +43,7 @@ export class QualificationService {
       }));
 
       const response = await this.anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 300,
         system: systemPrompt,
         messages,
@@ -51,7 +51,10 @@ export class QualificationService {
 
       const reply = (response.content[0] as { type: string; text: string }).text;
       await this.leadsService.addMessage(lead.id, 'AGENT', reply);
-      await this.whatsappService.sendMessage(phone, reply);
+      await this.whatsappService.sendMessage(phone, reply, {
+        phoneNumberId: agent.whatsappPhoneNumberId,
+        accessToken: agent.whatsappAccessToken,
+      });
 
       const last5 = history.slice(-5);
       await this.classifyLead(lead.id, last5, agent.products);
@@ -121,7 +124,7 @@ Conversation:
 ${conversation}`;
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 200,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -147,6 +150,8 @@ ${conversation}`;
     leadId: string,
     agent: {
       handoffMessage: string;
+      whatsappPhoneNumberId?: string | null;
+      whatsappAccessToken?: string | null;
       products: Array<{ id: string; name: string }>;
     },
   ): Promise<void> {
@@ -170,7 +175,7 @@ Conversation:
 ${conversation}`;
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 200,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -193,6 +198,9 @@ ${conversation}`;
       handedOffAt: new Date(),
     });
 
-    await this.whatsappService.sendMessage(lead.phone, agent.handoffMessage);
+    await this.whatsappService.sendMessage(lead.phone, agent.handoffMessage, {
+      phoneNumberId: agent.whatsappPhoneNumberId,
+      accessToken: agent.whatsappAccessToken,
+    });
   }
 }

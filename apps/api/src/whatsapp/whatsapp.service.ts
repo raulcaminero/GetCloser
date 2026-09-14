@@ -17,8 +17,15 @@ export class WhatsAppService {
     this.accessToken = this.configService.getOrThrow<string>('WHATSAPP_ACCESS_TOKEN');
   }
 
-  async sendMessage(to: string, text: string): Promise<void> {
-    const url = `https://graph.facebook.com/v19.0/${this.phoneNumberId}/messages`;
+  async sendMessage(
+    to: string,
+    text: string,
+    credentials?: { phoneNumberId?: string | null; accessToken?: string | null },
+  ): Promise<void> {
+    const phoneNumberId = credentials?.phoneNumberId || this.phoneNumberId;
+    const accessToken = credentials?.accessToken || this.accessToken;
+
+    const url = `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`;
     await firstValueFrom(
       this.httpService.post(
         url,
@@ -30,12 +37,16 @@ export class WhatsAppService {
         },
         {
           headers: {
-            Authorization: `Bearer ${this.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
         },
       ),
     );
+  }
+
+  getInboundPhoneNumberId(payload: WhatsAppWebhookPayload): string | null {
+    return payload.entry?.[0]?.changes?.[0]?.value?.metadata?.phone_number_id ?? null;
   }
 
   parseInbound(payload: WhatsAppWebhookPayload): WhatsAppInboundMessage | null {

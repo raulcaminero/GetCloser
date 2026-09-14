@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import type { WhatsAppWebhookPayload } from '@getcloser/shared';
 import { WhatsAppService } from './whatsapp.service.js';
 import { QualificationService } from '../agent/qualification.service.js';
+import { AgentService } from '../agent/agent.service.js';
 
 @Controller('webhook')
 export class WhatsAppController {
@@ -20,6 +21,7 @@ export class WhatsAppController {
   constructor(
     private readonly whatsappService: WhatsAppService,
     private readonly qualificationService: QualificationService,
+    private readonly agentService: AgentService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -42,9 +44,29 @@ export class WhatsAppController {
     const msg = this.whatsappService.parseInbound(payload);
     if (msg) {
       this.logger.log(`Inbound from ${msg.from}: ${msg.text}`);
-      const agentId = this.configService.getOrThrow<string>('DEFAULT_AGENT_ID');
+      
+      const inboundPhoneNumberId = this.whatsappService.getInboundPhoneNumberId(payload);
+      
+      const processMessage = async () => {
+        let agentId: string | null = null;
+        if (inboundPhoneNumberId) {
+          const matchedAgent = await this.agentService.findByPhoneNumberId(inboundPhoneNumberId);
+          if (matchedAgent) {
+            agentId = matchedAgent.id;
+          }
+        }
+
+        if (!agentId) {
+          agentId = this.configService.getOrThrow<string>('DEFAULT_AGENT_ID');
+        }
+
+        if (agentId) {
+          await this.qualificationService.handleInbound(msg.from, msg.text, agentId);
+        }
+      };
+
       // Fire and forget — Meta requires immediate 200 response
-      void this.qualificationService.handleInbound(msg.from, msg.text, agentId);
+      void processMessage();
     }
     return { status: 'ok' };
   }

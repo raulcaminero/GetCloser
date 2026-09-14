@@ -16,6 +16,8 @@ export interface AgentConfig {
   qualificationQuestions: string[];
   maxMessages: number;
   handoffMessage: string;
+  whatsappPhoneNumberId?: string;
+  whatsappAccessToken?: string;
   products: CatalogProduct[];
   isActive: boolean;
   createdAt: Date;

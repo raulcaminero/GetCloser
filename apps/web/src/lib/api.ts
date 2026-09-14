@@ -9,6 +9,7 @@ export const leadsApi = {
     api.get('/leads', { params }).then(r => r.data),
   getById: (id: string) => api.get(`/leads/${id}`).then(r => r.data),
   getConversation: (id: string) => api.get(`/leads/${id}/conversation`).then(r => r.data),
+  sendMessage: (id: string, content: string) => api.post(`/leads/${id}/messages`, { content }).then(r => r.data),
 };
 
 export const agentsApi = {

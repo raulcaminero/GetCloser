@@ -1,9 +1,43 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { WhatsAppService } from '../whatsapp/whatsapp.service.js';
 
 @Injectable()
 export class LeadsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly whatsappService: WhatsAppService,
+  ) {}
+
+  async sendHumanMessage(leadId: string, content: string) {
+    const lead = await this.prisma.lead.findUnique({
+      where: { id: leadId },
+      include: { agent: true },
+    });
+
+    if (!lead) {
+      throw new NotFoundException(`Lead ${leadId} not found`);
+    }
+
+    // Send to customer on WhatsApp
+    await this.whatsappService.sendMessage(lead.phone, content, {
+      phoneNumberId: lead.agent.whatsappPhoneNumberId,
+      accessToken: lead.agent.whatsappAccessToken,
+    });
+
+    // Save message and mark lead handed off
+    const msg = await this.addMessage(leadId, 'AGENT', content);
+
+    await this.prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        handedOff: true,
+        handedOffAt: lead.handedOffAt ?? new Date(),
+      },
+    });
+
+    return msg;
+  }
 
   async findOrCreate(phone: string, agentId: string, campaignId?: string) {
     return this.prisma.lead.upsert({

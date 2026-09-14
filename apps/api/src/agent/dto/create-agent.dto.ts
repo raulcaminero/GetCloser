@@ -54,6 +54,14 @@ export class CreateAgentDto {
   @IsString()
   handoffMessage: string;
 
+  @IsString()
+  @IsOptional()
+  whatsappPhoneNumberId?: string;
+
+  @IsString()
+  @IsOptional()
+  whatsappAccessToken?: string;
+
   @IsBoolean()
   isActive: boolean;
 

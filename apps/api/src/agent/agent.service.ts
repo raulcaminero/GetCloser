@@ -25,6 +25,13 @@ export class AgentService {
     return agent;
   }
 
+  async findByPhoneNumberId(phoneNumberId: string) {
+    return this.prisma.agent.findFirst({
+      where: { whatsappPhoneNumberId: phoneNumberId, isActive: true },
+      include: { products: true },
+    });
+  }
+
   create(dto: CreateAgentDto) {
     const { products, ...agentData } = dto;
     return this.prisma.agent.create({

@@ -16,6 +16,8 @@ model Agent {
   qualificationQuestions String[]
   maxMessages            Int        @default(20)
   handoffMessage         String
+  whatsappPhoneNumberId String?
+  whatsappAccessToken   String?
   isActive               Boolean    @default(true)
   createdAt              DateTime   @default(now())
   updatedAt              DateTime   @updatedAt

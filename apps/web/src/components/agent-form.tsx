@@ -17,6 +17,8 @@ type AgentFormData = {
   tone: string;
   maxMessages: number;
   handoffMessage: string;
+  whatsappPhoneNumberId?: string;
+  whatsappAccessToken?: string;
   isActive: boolean;
   qualificationQuestions: string[];
   products: Product[];
@@ -29,6 +31,8 @@ const defaultForm: AgentFormData = {
   tone: '',
   maxMessages: 20,
   handoffMessage: '',
+  whatsappPhoneNumberId: '',
+  whatsappAccessToken: '',
   isActive: true,
   qualificationQuestions: [],
   products: [],
@@ -141,6 +145,34 @@ export function AgentForm({ agentId, initial }: { agentId?: string; initial?: Pa
           value={form.handoffMessage}
           onChange={e => setField('handoffMessage', e.target.value)}
         />
+      </div>
+
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+        <h4 className="text-sm font-semibold text-violet-400">WhatsApp Business Credentials (Option 2 — Per Seller)</h4>
+        <p className="text-xs text-gray-400">
+          Leave blank to automatically use the central Company WhatsApp line (Option 1). Fill in if this agent uses a dedicated seller number.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass}>WhatsApp Phone Number ID</label>
+            <input
+              className={inputClass}
+              placeholder="e.g. 10928374650"
+              value={form.whatsappPhoneNumberId ?? ''}
+              onChange={e => setField('whatsappPhoneNumberId', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>WhatsApp Access Token</label>
+            <input
+              type="password"
+              className={inputClass}
+              placeholder="EAAG..."
+              value={form.whatsappAccessToken ?? ''}
+              onChange={e => setField('whatsappAccessToken', e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       <div>
